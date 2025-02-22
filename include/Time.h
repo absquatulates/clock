@@ -28,6 +28,10 @@ public:
     int get_hour() const;
     int get_minute() const;
     int get_second() const;
+
+    Time inc_hour();
+    Time inc_minute();
+    Time inc_second();
     
 
     //Operatorer
@@ -35,6 +39,7 @@ public:
     Time operator++(int);
     Time& operator--();
     Time operator--(int);
+
 
     bool operator<(Time const& rhs) const;
     bool operator>(Time const& rhs) const;

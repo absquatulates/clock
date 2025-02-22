@@ -49,6 +49,40 @@ int Time::get_second() const
     return second;
 }
 
+
+Time Time::inc_hour()
+{
+    if ((*this).hour == 23)
+		(*this).hour = 0;
+	else
+		(*this).hour++;
+    	
+	return *this;
+
+}
+
+Time Time::inc_minute()
+{
+    if ((*this).minute == 59)
+		(*this).minute = 0;
+	else
+		(*this).minute++;
+    	
+	return *this;
+}
+
+Time Time::inc_second()
+{
+    if ((*this).second == 59)
+		(*this).second = 0;
+	else
+		(*this)++;
+    	
+	return *this;
+}
+
+
+
 //Operatorer
 
 Time& Time::operator++()
