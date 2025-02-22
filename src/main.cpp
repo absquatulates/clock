@@ -4,10 +4,10 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-
-
 #include "Time.h"
 #include "Bitmaps.h"
+
+
 
 
 #define SCREEN_WIDTH 128
@@ -21,22 +21,43 @@
 #define NEXT_BUTTON 3
 #define DONE_BUTTON 4
 
+
+/**
+ * Public variables
+ */
+
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &SPI, OLED_DC, OLED_RESET, OLED_CS);
 Time time{};
 char time_string[9];  // "HH:MM:SS" + null terminator
 unsigned long previous_millis{};
 const long interval = 1000;
 
-/**
- * Function declarations
- */
 
+/*=============================================*
+ *                                             *
+ *            Function declarations            *
+ *                                             *
+ *=============================================*/
+
+void display_time();
+
+/**
+ * initiate time
+ */
 void init_time();
+void format_enter_time();
+int input_time(int state);
 
 
 /**
  * Setup
+ * Starting serial logging for debugging
+ * Initiates buttons
+ * Initiates display
+ * Draws the apple logo as a loading screen
+ * Initiates "time" with user input
  */
+
 void setup() 
 {
 	Serial.begin(9600);
@@ -63,6 +84,10 @@ void setup()
 
     display.display();
     delay(2000);
+    display.clearDisplay();
+    display.display();
+    delay(200);
+
 
     init_time();
     delay(1000);
@@ -72,7 +97,11 @@ void setup()
 
 /**
  * Main loop
+ * Makes clock go tick
+ * Some drifting due to millis() not being the most accurate (too slow)
+ * 
  */
+
 void loop() 
 {
     unsigned long current_millis{millis()};
@@ -83,17 +112,7 @@ void loop()
         time++;
 
         display.clearDisplay();
-
-        int text_width{strlen(time_string) * 12};
-        int x{(SCREEN_WIDTH - text_width) / 2};
-        int y{(SCREEN_HEIGHT - 16) / 2};
-
-        display.setTextSize(2);
-        display.setTextColor(SSD1306_WHITE); 
-        display.setCursor(x,y);
-        sprintf(time_string, "%02d:%02d:%02d", time.get_hour(), time.get_minute(), time.get_second());
-        display.print(time_string);
-        display.display();
+        display_time();
     }
 }
 
@@ -102,85 +121,82 @@ void loop()
 /**
  * Function implementations
  */
+
+void display_time()
+{
+    int text_width{strlen(time_string) * 12};
+    int x{(SCREEN_WIDTH - text_width) / 2};
+    int y{(SCREEN_HEIGHT - 16) / 2};
+
+    display.setTextSize(2);
+    display.setCursor(x,y);
+    sprintf(time_string, "%02d:%02d:%02d", time.get_hour(), time.get_minute(), time.get_second());
+    display.print(time_string);
+    display.display();
+}
+
 void init_time()
 {
-    Serial.println("init_time() is running..."); 
-    display.clearDisplay();
-    display.display();
-    delay(200);
-
-    display.setTextSize(1);
     display.setTextColor(SSD1306_WHITE); 
-    display.setCursor(1,0);
-    display.print(F("Please enter time:"));
+    format_enter_time();
     display.display();
-
     delay(300);
 
-
-
-
     int state{}; //0 = hour, 1 = minute, 2 = second
-    
-
-    while (true)
+    while (state < 4)
     {
         display.clearDisplay();
+        format_enter_time();
+        display_time();
+        state = input_time(state);
+    }
+}
+
+void format_enter_time()
+{
+    display.setTextSize(1);
+    display.setCursor(1,0);
+    display.print(F("Please enter time:"));
+}
+
+int input_time(int state)
+{
+    if (digitalRead(CHANGE_TIME_BUTTON) == HIGH)
+    {
+        switch (state)
+        {
+        case 0:
+            time.inc_hour();
+            delay(150);
+            break;
+
+        case 1:
+            time.inc_minute();
+            delay(150);
+            break;
+
+        case 2:
+            time.inc_second();
+            delay(150);
+            break;
         
-        display.setTextSize(1);
-        display.setTextColor(SSD1306_WHITE); 
-        display.setCursor(1,0);
-        display.print(F("Please enter time:"));
-
-        display.setTextSize(2);
-
-        int text_width{strlen(time_string) * 12};
-        int x{(SCREEN_WIDTH - text_width) / 2};
-        int y{(SCREEN_HEIGHT - 16) / 2};
-        display.setCursor(x,y);
-
-        //display.setCursor(30,40);
-        sprintf(time_string, "%02d:%02d:%02d", time.get_hour(), time.get_minute(), time.get_second());
-        display.print(time_string);
-        display.display();
-
-        if (digitalRead(CHANGE_TIME_BUTTON) == HIGH)
-        {
-            switch (state)
-            {
-            case 0:
-                time.inc_hour();
-                delay(120);
-                break;
-
-            case 1:
-                time.inc_minute();
-                delay(120);
-                break;
-
-            case 2:
-                time.inc_second();
-                delay(120);
-                break;
-            
-            default:
-                break;
-            }
-        }
-        else if (digitalRead(NEXT_BUTTON) == HIGH)
-        {
-            if (state == 2)
-                state = 0;
-            else
-                state++;
-
-            delay(200);
-        }
-        else if (digitalRead(DONE_BUTTON) == HIGH)
-        {
+        default:
             break;
         }
-        
-        
     }
+    else if (digitalRead(NEXT_BUTTON) == HIGH)
+    {
+        if (state == 2)
+            state = 0;
+        else
+            state++;
+
+        delay(200);
+    }
+    else if (digitalRead(DONE_BUTTON) == HIGH)
+    {
+        return 4;
+    }
+
+    return state;
 }
