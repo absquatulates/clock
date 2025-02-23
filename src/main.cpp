@@ -6,31 +6,15 @@
 
 #include "Time.h"
 #include "Bitmaps.h"
+#include "display_utils.h"
+#include "constants.h"
 
-
-
-
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-
-#define OLED_DC 8
-#define OLED_CS 10
-#define OLED_RESET 9
-
-#define CHANGE_TIME_BUTTON 2
-#define NEXT_BUTTON 3
-#define DONE_BUTTON 4
 
 
 /**
- * Public variables
+ * Public variables is declared in constants.h and defined in constants.cc
  */
 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &SPI, OLED_DC, OLED_RESET, OLED_CS);
-Time time{};
-char time_string[9];  // "HH:MM:SS" + null terminator
-unsigned long previous_millis{};
-const long interval = 1000;
 
 
 /*=============================================*
@@ -39,15 +23,21 @@ const long interval = 1000;
  *                                             *
  *=============================================*/
 
-void display_time();
-
 /**
  * initiate time
  */
 void init_time();
-void format_enter_time();
 int input_time(int state);
 
+
+
+
+
+/*=============================================*
+ *                                             *
+ *                    Setup                    *
+ *                                             *
+ *=============================================*/
 
 /**
  * Setup
@@ -95,6 +85,13 @@ void setup()
 }
 
 
+
+/*=============================================*
+ *                                             *
+ *                    Loop                     *
+ *                                             *
+ *=============================================*/
+
 /**
  * Main loop
  * Makes clock go tick
@@ -117,23 +114,15 @@ void loop()
 }
 
 
+/*=============================================*
+ *                                             *
+ *           Function implementations          *
+ *                                             *
+ *=============================================*/
 
 /**
  * Function implementations
  */
-
-void display_time()
-{
-    int text_width{strlen(time_string) * 12};
-    int x{(SCREEN_WIDTH - text_width) / 2};
-    int y{(SCREEN_HEIGHT - 16) / 2};
-
-    display.setTextSize(2);
-    display.setCursor(x,y);
-    sprintf(time_string, "%02d:%02d:%02d", time.get_hour(), time.get_minute(), time.get_second());
-    display.print(time_string);
-    display.display();
-}
 
 void init_time()
 {
@@ -152,12 +141,7 @@ void init_time()
     }
 }
 
-void format_enter_time()
-{
-    display.setTextSize(1);
-    display.setCursor(1,0);
-    display.print(F("Please enter time:"));
-}
+
 
 int input_time(int state)
 {
